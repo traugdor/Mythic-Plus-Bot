@@ -18,7 +18,7 @@ async def oauth_callback():
     UID = state[3:]
     #post code to token url
     access_token = wow.login(code)
-    if access_token.startswith("success! code="):
+    if access_token.startswith("success! token="):
         """not implemented"""
         #read JSON response from blizzard and save access_token
         #check_token to get expiry
