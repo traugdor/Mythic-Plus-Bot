@@ -1,6 +1,7 @@
 import mysql.connector
 import settings as cfg
 import dblayout as dbl
+from datetime import datetime
 
 db = mysql.connector.connect(
     host="localhost",
@@ -78,3 +79,32 @@ def findCharacterByName(characterName):
     mycursor.execute(sql)
     results = mycursor.fetchone()
     print(results)
+    
+def saveWowAccountData(data):
+    #data = [username, token, exp, 'scope.wow', 'wow']
+    #check if bUID already exists
+    sql = "SELECT * FROM blizzard_account_data where UID = " + data[0]
+    mycursor.execute(sql)
+    result = mycursor.fetchall()
+    count = mycursor.rowcount
+    date = data[2]
+    formatted_date = datetime.fromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')
+    if count == 0:
+        sql = "INSERT INTO blizzard_account_data (UID, game, access_token, expires_on, scope) \
+        VALUES ( %s, %s, %s, %s, %s)"
+        val = (data[0], data[4], data[1], formatted_date, data[3])
+        mycursor.execute(sql, val)
+        db.commit()
+        print(mycursor.rowcount, "record inserted.")
+        sql = "Select id from blizzard_account_data where UID = '"+  data[0] + "'"
+        mycursor.execute(sql)
+        bid = mycursor.fetchone()[0]
+        return bid
+    else:
+        sql = """UPDATE blizzard_account_data
+        SET access_token=%s, expires_on=%s
+        WHERE UID=%s"""
+        val = (data[1], formatted_date, data[0])
+        mycursor.execute(sql, val)
+        print(mycursor.rowcount, "record updated.")
+        return None

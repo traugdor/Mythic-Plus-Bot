@@ -52,7 +52,7 @@ SQL_userCharacters = "CREATE TABLE IF NOT EXISTS `userCharacters` ( \
 #Blizzard_Account_Data --
 
 #id -- unique numerical id -- used internally
-#UID -- discord user id
+#UID -- blizzard user id
 #game -- game for which the token can access API calls. `wow` is the only valid value at this time
 #access_token -- blizzard accesstoken
 #expires_on -- generated timestamp that would suggest that the token is expired and needs to be refreshed

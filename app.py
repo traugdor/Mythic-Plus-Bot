@@ -1,16 +1,15 @@
 # Work with Python 3.6
 import discord
-
 import db
 import settings as cfg
 import wow
+import httpserver
 
 TOKEN = cfg.token
 
 client = discord.Client()
-from httpserver import keep_alive, bot
 
-bot(client)
+httpserver.client = client
 
 @client.event
 async def on_message(message):
@@ -21,14 +20,8 @@ async def on_message(message):
     if message.content.startswith('!mplus hello'):
         msg = 'Hello {0.author.mention}'.format(message)
         await client.send_message(message.channel, msg)
-    
-    if message.content.startswith('!mplus testdb'):
-        db.insertWowCharacter(1, "Myorga", "wyrmrest-accord")
-        msg = 'db test finished'.format(message)
-        await client.send_message(message.channel, msg)
         
     if message.content.startswith('!mplus register'):
-        """not implemented"""
         #get user id
         #generate URL and use it as part of the unique state id
         registermessage = " \
@@ -48,6 +41,7 @@ To do this, click on the `v` by the server name up top and choose \"Privacy Sett
 Then in the window that pops up, move the slider to the right beside \"Allow direct messages from server members\" and try again.".format(message))
         
     if message.content.startswith('!mplus add'):
+        """not finished"""
         #remove prefix and only select the character name.
         characterName = message.content[10:].strip()
         #search for character only within user's account
@@ -71,6 +65,6 @@ async def on_ready():
     print('------')
     db.configure()
 
-keep_alive()
+httpserver.keep_alive()
 client.run(TOKEN)
     
