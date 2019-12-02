@@ -19,20 +19,6 @@ SQL_users = "CREATE TABLE IF NOT EXISTS `users` ( \
  KEY `id` (`id`) \
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1"
 
-#Characters --
-
-#id -- unique numerical id -- used internally
-#characterName
-#highestKey
-
-SQL_characters = "CREATE TABLE IF NOT EXISTS `characters` ( \
- `id` int(11) NOT NULL AUTO_INCREMENT, \
- `characterName` varchar(20) NOT NULL, \
- `region` varchar(30) NOT NULL, \
- `highestKey` int(11) NOT NULL, \
- `datelastmaint` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, \
- KEY `id` (`id`) \
-) ENGINE=InnoDB DEFAULT CHARSET=latin1"
 
 #UserCharacters --
 
@@ -81,7 +67,9 @@ SQL_wowCharacters = "CREATE TABLE IF NOT EXISTS `wowCharacters` ( \
  `id` int(11) NOT NULL AUTO_INCREMENT, \
  `wowAccountId` int(11) NOT NULL, \
  `characterName` varchar(20) NOT NULL, \
+ `characterLevel` int(11) NOT NULL, \
  `region` varchar(30) NOT NULL, \
+ `highestKey` int(4) NULL DEFAULT NULL, \
  `datelastmaint` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, \
  KEY `id` (`id`) \
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1"

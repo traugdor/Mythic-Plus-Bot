@@ -28,6 +28,7 @@ def listCharacters(bID = None, access_token = None, bUsername = None):
         """do something"""
         #lookup accesstoken where bid = bid
         #use access_token below
+        access_token = db.getToken(bid = bID)
         
     
         
@@ -35,19 +36,15 @@ def listCharacters(bID = None, access_token = None, bUsername = None):
         """do something"""
         #lookup accesstoken where UID = bUsername
         #use access_token below
+        access_token = db.getToken(username = bUsername)
         
     if access_token is not None:
         """do something"""
         #get json from wow and pull all characters
-        wowCharactersURL = urlpre + region + wowurlpost + 'user/characters?access_token=' + access_token
-        r = requests.get(wowCharactersURL)
-        response = json.loads(json.dumps(r.json))
-        characters = response["characters"]
-        responseData = []
-        for char in characters:
-            name = char["name"].lower()
+        data = getCharacters(access_token)
+        return data
     else:
-        raise ValueError("No combination of errors could produce a valid access_token")
+        raise ValueError("No combination of values could produce a valid access_token in wow.listCharacters")
 
 def getCharacter(characterId):
     """return character information from WoW using the supplied characterID"""
@@ -109,3 +106,45 @@ def checktoken(token):
             #process good data and return to calling function
             btag = response["battletag"]
             return True, [username, exp, btag]
+
+def getCharacters(access_token, bID = None):
+    """get characters from wow api and get only the data we need
+    returns:
+        [{
+            "name": name,
+            "charRegion": charRegion,
+            "bid": bid,
+            "level": level
+        }"""
+    bid = ""
+    wowCharactersURL = urlpre + region + wowurlpost + 'user/characters?access_token=' + access_token
+    r = requests.get(wowCharactersURL)
+    response = json.loads(json.dumps(r.json()))
+    characters = response["characters"]
+    responseData = []
+    if bID is None:
+        #lookup bid using accesstoken?
+        bid = db.getBIDfromToken(access_token)
+    else:
+        bid = bID
+    for char in characters:
+        name = char["name"].lower()
+        charRegion = char["thumbnail"].split('/',1)[0].lower()
+        level = char["level"]
+        wowChar = {
+            "name": name,
+            "charRegion": charRegion,
+            "bid": bid,
+            "level": level
+        }
+        responseData.append(wowChar)
+    return responseData
+    
+def getClientToken():
+    """get a unique access token just for this client
+    returns:
+        access_token to use for API calls that do not need specific user authorization"""
+    url = oauthBase + "/token?grant_type=client_credentials&scope=wow.profile"
+    r=requests.get(url)
+    response = json.loads(json.dumps(r.json()))["access_token"]
+    return response

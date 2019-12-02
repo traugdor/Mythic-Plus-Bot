@@ -18,7 +18,7 @@ def configure():
     mycursor.execute(sql, val)
     result = mycursor.fetchall()
     count = mycursor.rowcount
-    if count == -1 or count < 5:
+    if count == -1 or count < 4:
         print("Installing tables in DB")
         print("creating users table")
         sql = dbl.SQL_users
@@ -32,10 +32,6 @@ def configure():
         sql = dbl.SQL_wowCharacters
         mycursor.execute(sql, val)
         db.commit()
-        print("creating characters table")
-        sql = dbl.SQL_characters
-        mycursor.execute(sql, val)
-        db.commit()
         print("creating userCharacters table")
         sql = dbl.SQL_userCharacters
         mycursor.execute(sql, val)
@@ -45,7 +41,7 @@ def configure():
         mycursor.execute(sql, val)
         result = mycursor.fetchall()
         count = mycursor.rowcount
-        if count == -1 or count < 5:
+        if count == -1 or count < 4:
             print("Something went wrong. Please check DB. Bot will fail to work properly until DB is fixed.")
         else:
             print("DB is good to go!")
@@ -59,26 +55,16 @@ def insertUser (discordId, blizzardAccountId):
     db.commit()
     print(mycursor.rowcount, "record inserted.")
     
-def insertWowCharacter(userId, characterName, characterRegion):
-    sql = "INSERT INTO characters (characterName, region, highestKey) VALUES (%s, %s, 0)"
-    val = (characterName, characterRegion)
-    mycursor.execute(sql, val)
-    db.commit()
-    sql = "SELECT id FROM characters WHERE characterName = '" + characterName + "'"
+def findCharacterByName(characterName, regionName):
+    sql = ""
+    if regionName is None:
+        sql = "SELECT * FROM wowCharacters WHERE characterName = '" + characterName + "'"
+    else:
+        sql = "SELECT * FROM wowCharacters WHERE characterName = '" + characterName + "' and region = '" + regionName + "'"
     mycursor.execute(sql)
-    cid = mycursor.fetchone()[0]
-    print(str(cid) + " was inserted");
-    sql = "INSERT INTO userCharacters (userId, characterId) VALUES (%s, %s)"
-    val = (int(userId), int(cid))
-    mycursor.execute(sql, val)
-    db.commit()
-    print("Character added")
-    
-def findCharacterByName(characterName):
-    sql = "SELECT * FROM wowCharacters WHERE characterName = '" + characterName + "'"
-    mycursor.execute(sql)
-    results = mycursor.fetchone()
+    results = mycursor.fetchall()
     print(results)
+    return results
     
 def saveWowAccountData(data):
     #data = [username, token, exp, 'scope.wow', 'wow']
@@ -99,12 +85,72 @@ def saveWowAccountData(data):
         sql = "Select id from blizzard_account_data where UID = '"+  data[0] + "'"
         mycursor.execute(sql)
         bid = mycursor.fetchone()[0]
-        return bid
+        return True, bid
     else:
         sql = """UPDATE blizzard_account_data
         SET access_token=%s, expires_on=%s
         WHERE UID=%s"""
         val = (data[1], formatted_date, data[0])
         mycursor.execute(sql, val)
+        db.commit()
         print(mycursor.rowcount, "record updated.")
-        return None
+        sql = "Select id from blizzard_account_data where UID = '"+  data[0] + "'"
+        mycursor.execute(sql)
+        bid = mycursor.fetchone()[0]
+        return False, bid
+        
+def getToken(bid = None, username = None):
+    sql = ""
+    val = ()
+    if bid is None:
+        if username is None:
+            raise ValueError("No combination of values could produce a valid access_token in db.getToken")
+        else:
+            sql = "SELECT access_token from blizzard_account_data where UID=%s"
+            val = (username)
+    else:
+        sql = "SELECT access_token from blizzard_account_data where id=%s"
+        val = (bid)
+    
+    mycursor.execute(sql, val)
+    access_token = mycursor.fetchone()[0]
+    return access_token
+
+def saveCharacters(charData):
+    selectSql = "SELECT * from wowCharacters WHERE wowAccountId=%s and characterName=%s and region=%s"
+    sql = "INSERT INTO wowCharacters (wowAccountId, characterName, region, characterLevel) VALUES(%s,%s,%s,%s)"
+    for char in charData:
+        insertval=(char["bid"], char["name"], char["charRegion"], char["level"])
+        val=(char["bid"], char["name"], char["charRegion"])
+        mycursor.execute(selectSql, val)
+        results = mycursor.fetchall()
+        if mycursor.rowcount == 0:
+            mycursor.execute(sql, insertval)
+            db.commit()
+            if mycursor.rowcount == 1:
+                print(val, "inserted.")
+            else:
+                print(val, "not inserted or there was an error")
+    return True
+    
+def getBIDfromToken(access_token):
+    sql = "SELECT id from blizzard_account_data WHERE access_token = '" + access_token + "'"
+    mycursor.execute(sql)
+    bid = mycursor.fetchone()[0]
+    return bid
+    
+def getBIDfromDiscordUser(UID):
+    sql = "SELECT blizzardAccountID FROM users WHERE discordUID = '" + UID + "'"
+    mycursor.execute(sql)
+    bid = mycursor.fetchone()[0]
+    return bid
+    
+def listAllCharacters(bid = None):
+    sql = ""
+    if bid is None:
+        sql = "SELECT * from wowCharacters"
+    else:
+        sql = "SELECT * FROM wowCharacters where wowAccountId = '" + str(bid) + "'"
+    mycursor.execute(sql)
+    characters = mycursor.fetchall()
+    return characters

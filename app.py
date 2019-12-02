@@ -1,5 +1,6 @@
 # Work with Python 3.6
 import discord
+from discord.utils import find
 import db
 import settings as cfg
 import wow
@@ -16,6 +17,8 @@ async def on_message(message):
     # we do not want the bot to reply to itself
     if message.author == client.user:
         return
+    
+    print(message.author.name + ": " + message.content)
 
     if message.content.startswith('!mplus hello'):
         msg = 'Hello {0.author.mention}'.format(message)
@@ -44,18 +47,65 @@ Then in the window that pops up, move the slider to the right beside \"Allow dir
         """not finished"""
         #remove prefix and only select the character name.
         characterName = message.content[10:].strip()
+        cname = None
+        region = None
+        if characterName.find(' ') > -1:
+            cname = characterName.split(' ')[0]
+            region = characterName.split(' ')[1]
+        else:
+            cname = characterName
         #search for character only within user's account
         #   if multiple characters are found with the same name, ask user to specify which character
-        msg = ('{0.author.mention}, multiple characters were found with that name ' + characterName + '. Please specify region.').format(message)
-        await client.send_message(message.channel, msg)
-        #   if only one character is found with that name, then add it to the list of tracked characters.
-        msg = ('{0.author.mention}, added ' + characterName + ' to the list to track!').format(message)
-        await client.send_message(message.channel, msg)
+        characters = db.findCharacterByName(cname, region)
+        msg = None
+        if len(characters) > 1:
+            msg = ('{0.author.mention}, multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
+            await client.send_message(message.channel, msg)
+        elif len(characters) == 1:
+            #   if only one character is found with that name, then add it to the list of tracked characters.
+            # search for character ID in userCharacters
+            # if not found, check ownership and add to list if allowed
+            msg = ('{0.author.mention}, added ' + characterName + ' to the list to track!').format(message)
+            await client.send_message(message.channel, msg)
+        else:
+            # couldn't find it.
+            msg = ('{0.author.mention}, could not find that character!').format(message)
+            await client.send_message(message.channel, msg)
     
     if message.content.startswith('!mplus silly'):
         string = message.content[12:].strip()
         string = string[::-1]
         await client.send_message(message.channel, string.format(message))
+        
+    if message.content.startswith('!mplus character list'):
+        emdesc = ""
+        emtitle = ""
+        # get author UID
+        uid = message.author.id
+        # look in users for bid
+        bid = db.getBIDfromDiscordUser(uid)
+        # get list of characters belonging to bid
+        characterList = db.listAllCharacters(bid)
+        # add to list:
+        #    character name - realm - level
+        for cha in characterList:
+            #print(cha)
+            emdesc += cha[2] + ' - ' + cha[4] + ' - Level: ' + str(cha[3]) + "\n"
+        # get author name
+        nick = message.author.nick
+        if nick is None:
+            nick = message.author.display_name
+        emtitle = 'Characters for ' + nick
+        em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
+        await client.send_message(message.channel, "Here's your character list!", embed=em)
+
+
+@client.event
+async def on_member_remove(member):
+    """
+    Find all the characters that belong to this
+    member and remove all data.
+    """
 
 @client.event
 async def on_ready():
@@ -64,6 +114,16 @@ async def on_ready():
     print(client.user.id)
     print('------')
     db.configure()
+    
+async def find_channel(guild):
+    """
+    Finds a suitable guild channel for posting the
+    welcome message.
+    """
+    for c in guild.channels:
+        if not c.permissions_for(guild.me).send_messages:
+            continue
+        return c
 
 httpserver.keep_alive()
 client.run(TOKEN)
