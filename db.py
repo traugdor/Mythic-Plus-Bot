@@ -53,7 +53,7 @@ def insertUser (discordId, blizzardAccountId):
     val = (int(discordId), int(blizzardAccountId))
     mycursor.execute(sql, val)
     db.commit()
-    print(mycursor.rowcount, "record inserted.")
+    #print(mycursor.rowcount, "record inserted.")
     
 def findCharacterByName(characterName, regionName):
     sql = ""
@@ -63,7 +63,7 @@ def findCharacterByName(characterName, regionName):
         sql = "SELECT * FROM wowCharacters WHERE characterName = '" + characterName + "' and region = '" + regionName + "'"
     mycursor.execute(sql)
     results = mycursor.fetchall()
-    print(results)
+    #print(results)
     return results
     
 def saveWowAccountData(data):
@@ -154,3 +154,74 @@ def listAllCharacters(bid = None):
     mycursor.execute(sql)
     characters = mycursor.fetchall()
     return characters
+    
+def getOrAddUserCharacters(characterName, region, dUID):
+    sql = ""
+    if region is None:
+        sql = "select * from userCharacters uc join wowCharacters wc on uc.characterId = wc.id where wc.characterName = '" + characterName + "'"
+    else:
+        sql = "select * from userCharacters uc join wowCharacters wc on uc.characterId = wc.id where wc.characterName = '" + characterName + "' and wc.region = '" + region + "'"
+    mycursor.execute(sql)
+    characters = mycursor.fetchall()
+    if len(characters) == 0:
+        # no character found
+        # get cid if bid dUID matches supplied dUID
+        try:
+            if region is not None:
+                sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + dUID + "' and wc.characterName = '" + characterName + "' and wc.region = '" + region + "'"
+            else:
+                sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + dUID + "' and wc.characterName = '" + characterName + "'"
+            #print(sql)
+            mycursor.execute(sql)
+            CID, UID = mycursor.fetchall()[0]
+            sql = "select * from userCharacters where userId = %s and characterId = %s"
+            mycursor.execute(sql, (UID, CID))
+            existCheck = mycursor.fetchall()
+            if len(existCheck) > 0:
+                return len(existCheck)
+            sql = "insert into userCharacters (userId, characterId) select %s, %s from DUAL where not EXISTS (select * from userCharacters where userId = %s and characterId = %s)"
+            val = (str(UID), str(CID), str(UID), str(CID))
+            mycursor.execute(sql, val)
+            db.commit()
+            return True
+        except:
+            raise
+    else:
+        return len(characters)
+
+def removeCharacter(characterName, region, dUID):
+    sql = ""
+    if region is None:
+        sql = "select * from userCharacters uc join wowCharacters wc on uc.characterId = wc.id where wc.characterName = '" + characterName + "'"
+    else:
+        sql = "select * from userCharacters uc join wowCharacters wc on uc.characterId = wc.id where wc.characterName = '" + characterName + "' and wc.region = '" + region + "'"
+    mycursor.execute(sql)
+    characters = mycursor.fetchall()
+    if len(characters) == 0:
+        # no character was found; return
+        return False
+    else:
+        #delete from list
+        if region is not None:
+            sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + dUID + "' and wc.characterName = '" + characterName + "' and wc.region = '" + region + "'"
+        else:
+            sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + dUID + "' and wc.characterName = '" + characterName + "'"
+        #print(sql)
+        mycursor.execute(sql)
+        CID, UID = mycursor.fetchall()[0]
+        sql = "delete from userCharacters where userId = %s and characterId = %s"
+        val = (str(UID), str(CID))
+        mycursor.execute(sql, val)
+        db.commit()
+        delCount = mycursor.rowcount
+        if delCount > 0:
+            return True
+        else:
+            return False
+        
+def getKeystones():
+    """not implemented"""
+    sql = "SELECT characterName, region, COALESCE(highestKey, 'No Key') from wowCharacters wc join userCharacters uc on uc.characterId = wc.id"
+    mycursor.execute(sql)
+    keys = mycursor.fetchall()
+    return keys

@@ -44,7 +44,6 @@ To do this, click on the `v` by the server name up top and choose \"Privacy Sett
 Then in the window that pops up, move the slider to the right beside \"Allow direct messages from server members\" and try again.".format(message))
         
     if message.content.startswith('!mplus add'):
-        """not finished"""
         #remove prefix and only select the character name.
         characterName = message.content[10:].strip()
         cname = None
@@ -64,8 +63,46 @@ Then in the window that pops up, move the slider to the right beside \"Allow dir
         elif len(characters) == 1:
             #   if only one character is found with that name, then add it to the list of tracked characters.
             # search for character ID in userCharacters
+            result = db.getOrAddUserCharacters(cname, region, message.author.id)
             # if not found, check ownership and add to list if allowed
-            msg = ('{0.author.mention}, added ' + characterName + ' to the list to track!').format(message)
+            if region is None:
+                region = ''
+            if result is True:
+                msg = ('{0.author.mention}, added ' + characterName + ' to the list to track!').format(message)
+            elif result is False:
+                msg = ('{0.author.mention}, could not add ' + characterName + ' to the list to track! Please notify a developer.').format(message)
+            else:
+                msg = ('{0.author.mention}, ' + characterName + ' is already on the list! Type `!mplus remove ' + cname + ' ' + region + '` to remove.').format(message)
+                #print(result)
+                
+            await client.send_message(message.channel, msg)
+        else:
+            # couldn't find it.
+            msg = ('{0.author.mention}, could not find that character!').format(message)
+            await client.send_message(message.channel, msg)
+    
+    if message.content.startswith('!mplus remove'):
+        """not finished"""
+        #remove prefix and get character
+        characterName = message.content[13:].strip()
+        cname = None
+        region = None
+        if characterName.find(' ') > -1:
+            cname = characterName.split(' ')[0]
+            region = characterName.split(' ')[1]
+        else:
+            cname = characterName
+        #search for character only within user's account
+        #   if multiple characters are found with the same name, ask user to specify which character
+        characters = db.findCharacterByName(cname, region)
+        msg = None
+        if len(characters) > 1:
+            msg = ('{0.author.mention}, multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
+            await client.send_message(message.channel, msg)
+        elif len(characters) == 1:
+            #   if only one character is found with that name, then remove it from the list
+            result = db.removeCharacter(cname, region, message.author.id)
+            msg = ('{0.author.mention}, removed ' + characterName + ' from the list to track!').format(message)
             await client.send_message(message.channel, msg)
         else:
             # couldn't find it.
@@ -98,7 +135,15 @@ Then in the window that pops up, move the slider to the right beside \"Allow dir
         emtitle = 'Characters for ' + nick
         em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
         await client.send_message(message.channel, "Here's your character list!", embed=em)
-
+    
+    if message.content.startswith('!mplus check'):
+        keys = db.getKeystones()
+        emtitle = 'Highest Keystone for Registered Characters'
+        emdesc = ''
+        for key in keys:
+            emdesc += key[0] + ' - ' + key[1] + ' - Keystone Level: ' + key[2] + "\n"
+        em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
+        await client.send_message(message.channel, "Here's the list!", embed=em)
 
 @client.event
 async def on_member_remove(member):
