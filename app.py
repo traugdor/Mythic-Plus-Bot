@@ -27,87 +27,97 @@ async def on_message(message):
     if message.content.startswith('!mplus register'):
         #get user id
         #generate URL and use it as part of the unique state id
-        registermessage = " \
-        Thank you for choosing Mythic Plus Bot! Click this link to get going! \
-        \
-        " + cfg.botBaseUrl + "?url=https%3A%2F%2Fus.battle.net%2Foauth%2Fauthorize%3Fscope%3Dwow.profile%26client_id%3D" \
-        + cfg.wowClientId + "%26state%3DUID" + str(message.author.id) \
-        + "%26redirect_uri%3Dhttps%3A%2F%2F93010e781ce7453389bdac92f444797d.vfs.cloud9.us-east-2.amazonaws.com%2Foauth%2Fcallback%26response_type%3Dcode"
-        try:
-            await message.author.send(registermessage)
-        except discord.errors.Forbidden:
-            await message.channel.send("{0.author.mention}, I can't send you a direct message! \n\n \
+        if message.channel.type == discord.ChannelType.private:
+            await message.author.send("Mythic Plus Bot cannot respond to some commands in private channels. Try the `register` command in a Discord Server where this bot has an online presence.")
+        else:
+            registermessage = " \
+            Thank you for choosing Mythic Plus Bot! Click this link to get going! \
+            \
+            " + cfg.botBaseUrl + "?url=https%3A%2F%2Fus.battle.net%2Foauth%2Fauthorize%3Fscope%3Dwow.profile%26client_id%3D" \
+            + cfg.wowClientId + "%26state%3DUID" + str(message.author.id) \
+            + "%26redirect_uri%3Dhttps%3A%2F%2F93010e781ce7453389bdac92f444797d.vfs.cloud9.us-east-2.amazonaws.com%2Foauth%2Fcallback%26response_type%3Dcode"
+            try:
+                await message.author.send(registermessage)
+            except discord.errors.Forbidden:
+                await message.channel.send("{0.author.mention}, I can't send you a direct message! \n\n \
  \
 Please allow members of this Discord Server to send you a direct message to continue. \n\n \
  \
-To do this, click on the `v` by the server name up top and choose \"Privacy Settings\" from the menu. \n \
-Then in the window that pops up, move the slider to the right beside \"Allow direct messages from server members\" and try again.".format(message))
+Please see online help for instructions on how to do this. It is important that the Mythic Plus Bot be able to send you private messages.".format(message))
         
     if message.content.startswith('!mplus add'):
-        #remove prefix and only select the character name.
-        characterName = message.content[10:].strip()
-        cname = None
-        region = None
-        if characterName.find(' ') > -1:
-            cname = characterName.split(' ')[0]
-            region = characterName.split(' ')[1]
+        """Not finished"""
+        if message.channel.type == discord.ChannelType.private:
+            await message.author.send("Mythic Plus Bot cannot respond to some commands in private channels. Try the `add` command in a Discord Server where this bot has an online presence.")
         else:
-            cname = characterName
-        #search for character only within user's account
-        #   if multiple characters are found with the same name, ask user to specify which character
-        characters = db.findCharacterByName(cname, region)
-        msg = None
-        if len(characters) > 1:
-            msg = ('{0.author.mention}, multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
-            await message.channel.send(msg)
-        elif len(characters) == 1:
-            #   if only one character is found with that name, then add it to the list of tracked characters.
-            # search for character ID in userCharacters
-            result = db.getOrAddUserCharacters(cname, region, message.author.id)
-            # if not found, check ownership and add to list if allowed
-            if region is None:
-                region = ''
-            if result is True:
-                msg = ('{0.author.mention}, added ' + characterName + ' to the list to track!').format(message)
-            elif result is False:
-                msg = ('{0.author.mention}, could not add ' + characterName + ' to the list to track! Please notify a developer.').format(message)
+            #remove prefix and only select the character name.
+            characterName = message.content[10:].strip()
+            cname = None
+            region = None
+            if characterName.find(' ') > -1:
+                cname = characterName.split(' ')[0]
+                region = characterName.split(' ')[1]
             else:
-                msg = ('{0.author.mention}, ' + characterName + ' is already on the list! Type `!mplus remove ' + cname + ' ' + region + '` to remove.').format(message)
-                #print(result)
-                
-            await message.channel.send(msg)
-        else:
-            # couldn't find it.
-            msg = ('{0.author.mention}, could not find that character!').format(message)
-            await message.channel.send(msg)
+                cname = characterName
+            #search for character only within user's account
+            #   if multiple characters are found with the same name, ask user to specify which character
+            characters = db.findCharacterByName(cname, region)
+            msg = None
+            if len(characters) > 1:
+                msg = ('{0.author.mention}, multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
+                # TODO: Get list of characters matching the input name that are owned by the sending user
+                # TODO: embed character list in message
+                await message.channel.send(msg)
+            elif len(characters) == 1:
+                #   if only one character is found with that name, then add it to the list of tracked characters.
+                # search for character ID in userCharacters
+                result = db.getOrAddUserCharacters(cname, region, message.author.id)
+                # if not found, check ownership and add to list if allowed
+                if region is None:
+                    region = ''
+                if result is True:
+                    msg = ('{0.author.mention}, added ' + characterName + ' to the list to track!').format(message)
+                elif result is False:
+                    msg = ('{0.author.mention}, could not add ' + characterName + ' to the list to track! Please notify a developer.').format(message)
+                else:
+                    msg = ('{0.author.mention}, ' + characterName + ' is already on the list! Type `!mplus remove ' + cname + ' ' + region + '` to remove.').format(message)
+                    #print(result)
+                await message.channel.send(msg)
+            else:
+                # couldn't find it.
+                msg = ('{0.author.mention}, could not find that character!').format(message)
+                await message.channel.send(msg)
     
     if message.content.startswith('!mplus remove'):
         """not finished"""
-        #remove prefix and get character
-        characterName = message.content[13:].strip()
-        cname = None
-        region = None
-        if characterName.find(' ') > -1:
-            cname = characterName.split(' ')[0]
-            region = characterName.split(' ')[1]
+        if message.channel.type == discord.ChannelType.private:
+            await message.author.send("Mythic Plus Bot cannot respond to some commands in private channels. Try the `remove` command in a Discord Server where this bot has an online presence.")
         else:
-            cname = characterName
-        #search for character only within user's account
-        #   if multiple characters are found with the same name, ask user to specify which character
-        characters = db.findCharacterByName(cname, region)
-        msg = None
-        if len(characters) > 1:
-            msg = ('{0.author.mention}, multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
-            await message.channel.send(msg)
-        elif len(characters) == 1:
-            #   if only one character is found with that name, then remove it from the list
-            result = db.removeCharacter(cname, region, message.author.id)
-            msg = ('{0.author.mention}, removed ' + characterName + ' from the list to track!').format(message)
-            await message.channel.send(msg)
-        else:
-            # couldn't find it.
-            msg = ('{0.author.mention}, could not find that character!').format(message)
-            await message.channel.send(msg)
+            #remove prefix and get character
+            characterName = message.content[13:].strip()
+            cname = None
+            region = None
+            if characterName.find(' ') > -1:
+                cname = characterName.split(' ')[0]
+                region = characterName.split(' ')[1]
+            else:
+                cname = characterName
+            #search for character only within user's account
+            #   if multiple characters are found with the same name, ask user to specify which character
+            characters = db.findCharacterByName(cname, region)
+            msg = None
+            if len(characters) > 1:
+                msg = ('{0.author.mention}, multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
+                await message.channel.send(msg)
+            elif len(characters) == 1:
+                #   if only one character is found with that name, then remove it from the list
+                result = db.removeCharacter(cname, region, message.author.id)
+                msg = ('{0.author.mention}, removed ' + characterName + ' from the list to track!').format(message)
+                await message.channel.send(msg)
+            else:
+                # couldn't find it.
+                msg = ('{0.author.mention}, could not find that character!').format(message)
+                await message.channel.send(msg)
     
     if message.content.startswith('!mplus silly'):
         string = message.content[12:].strip()
@@ -117,33 +127,48 @@ Then in the window that pops up, move the slider to the right beside \"Allow dir
     if message.content.startswith('!mplus character list'):
         emdesc = ""
         emtitle = ""
-        # get author UID
-        uid = message.author.id
-        # look in users for bid
-        bid = db.getBIDfromDiscordUser(uid)
-        # get list of characters belonging to bid
-        characterList = db.listAllCharacters(bid)
-        # add to list:
-        #    character name - realm - level
-        for cha in characterList:
-            #print(cha)
-            emdesc += cha[2] + ' - ' + cha[4] + ' - Level: ' + str(cha[3]) + "\n"
-        # get author name
-        nick = message.author.nick
-        if nick is None:
-            nick = message.author.display_name
-        emtitle = 'Characters for ' + nick
-        em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
-        await message.channel.send("Here's your character list!", embed=em)
+        # reject command from private message
+        print(message.channel.type)
+        if message.channel.type == discord.ChannelType.private:
+            await message.author.send("Mythic Plus Bot cannot respond to some commands in private channels. Try the `character list` command in a Discord Server where this bot has an online presence.")
+        else:
+            # get author UID
+            uid = message.author.id
+            # look in users for bid
+            bid = db.getBIDfromDiscordUser(uid)
+            # get list of characters belonging to bid
+            characterList = db.listAllCharacters(bid)
+            # add to list:
+            #    character name - realm - level
+            for cha in characterList:
+                #print(cha)
+                emdesc += cha[2] + ' - ' + cha[4] + ' - Level: ' + str(cha[3]) + "\n"
+            # get author name
+            nick = message.author.nick
+            if nick is None:
+                nick = message.author.display_name
+            emtitle = 'Characters for ' + nick
+            em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
+            await message.channel.send("Here's your character list!", embed=em)
     
     if message.content.startswith('!mplus check'):
-        keys = db.getKeystones()
-        emtitle = 'Highest Keystone for Registered Characters'
-        emdesc = ''
-        for key in keys:
-            emdesc += key[0] + ' - ' + key[1] + ' - Keystone Level: ' + key[2] + "\n"
-        em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
-        await message.channel.send("Here's the list!", embed=em)
+        if message.channel.type == discord.ChannelType.private:
+            await message.author.send("Mythic Plus Bot cannot respond to some commands in private channels. Try the `check` command in a Discord Server where this bot has an online presence.")
+        else:
+            keys = db.getKeystones()
+            emtitle = 'Highest Keystone for Registered Characters'
+            emdesc = ''
+            for key in keys:
+                emdesc += key[0] + ' - ' + key[1] + ' - Keystone Level: ' + key[2] + "\n"
+            em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
+            await message.channel.send("Here's the list!", embed=em)
+    
+    if message.content.startswith('!mplus ping'):
+        pingreply = message.content[11:].strip()
+        if pingreply == "":
+            await message.channel.send("PONG!")
+        else:
+            await message.channel.send(pingreply)
 
 @client.event
 async def on_member_remove(member):
