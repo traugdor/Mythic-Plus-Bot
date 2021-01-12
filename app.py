@@ -22,7 +22,7 @@ async def on_message(message):
 
     if message.content.startswith('!mplus hello'):
         msg = 'Hello {0.author.mention}'.format(message)
-        await client.send_message(message.channel, msg)
+        await message.channel.send(msg)
         
     if message.content.startswith('!mplus register'):
         #get user id
@@ -34,9 +34,9 @@ async def on_message(message):
         + cfg.wowClientId + "%26state%3DUID" + str(message.author.id) \
         + "%26redirect_uri%3Dhttps%3A%2F%2F93010e781ce7453389bdac92f444797d.vfs.cloud9.us-east-2.amazonaws.com%2Foauth%2Fcallback%26response_type%3Dcode"
         try:
-            await client.send_message(message.author, registermessage)
+            await message.author.send(registermessage)
         except discord.errors.Forbidden:
-            await client.send_message(message.channel, "{0.author.mention}, I can't send you a direct message! \n\n \
+            await message.channel.send("{0.author.mention}, I can't send you a direct message! \n\n \
  \
 Please allow members of this Discord Server to send you a direct message to continue. \n\n \
  \
@@ -59,7 +59,7 @@ Then in the window that pops up, move the slider to the right beside \"Allow dir
         msg = None
         if len(characters) > 1:
             msg = ('{0.author.mention}, multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
-            await client.send_message(message.channel, msg)
+            await message.channel.send(msg)
         elif len(characters) == 1:
             #   if only one character is found with that name, then add it to the list of tracked characters.
             # search for character ID in userCharacters
@@ -75,11 +75,11 @@ Then in the window that pops up, move the slider to the right beside \"Allow dir
                 msg = ('{0.author.mention}, ' + characterName + ' is already on the list! Type `!mplus remove ' + cname + ' ' + region + '` to remove.').format(message)
                 #print(result)
                 
-            await client.send_message(message.channel, msg)
+            await message.channel.send(msg)
         else:
             # couldn't find it.
             msg = ('{0.author.mention}, could not find that character!').format(message)
-            await client.send_message(message.channel, msg)
+            await message.channel.send(msg)
     
     if message.content.startswith('!mplus remove'):
         """not finished"""
@@ -98,21 +98,21 @@ Then in the window that pops up, move the slider to the right beside \"Allow dir
         msg = None
         if len(characters) > 1:
             msg = ('{0.author.mention}, multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
-            await client.send_message(message.channel, msg)
+            await message.channel.send(msg)
         elif len(characters) == 1:
             #   if only one character is found with that name, then remove it from the list
             result = db.removeCharacter(cname, region, message.author.id)
             msg = ('{0.author.mention}, removed ' + characterName + ' from the list to track!').format(message)
-            await client.send_message(message.channel, msg)
+            await message.channel.send(msg)
         else:
             # couldn't find it.
             msg = ('{0.author.mention}, could not find that character!').format(message)
-            await client.send_message(message.channel, msg)
+            await message.channel.send(msg)
     
     if message.content.startswith('!mplus silly'):
         string = message.content[12:].strip()
         string = string[::-1]
-        await client.send_message(message.channel, string.format(message))
+        await message.channel.send(string.format(message))
         
     if message.content.startswith('!mplus character list'):
         emdesc = ""
@@ -134,7 +134,7 @@ Then in the window that pops up, move the slider to the right beside \"Allow dir
             nick = message.author.display_name
         emtitle = 'Characters for ' + nick
         em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
-        await client.send_message(message.channel, "Here's your character list!", embed=em)
+        await message.channel.send("Here's your character list!", embed=em)
     
     if message.content.startswith('!mplus check'):
         keys = db.getKeystones()
@@ -143,7 +143,7 @@ Then in the window that pops up, move the slider to the right beside \"Allow dir
         for key in keys:
             emdesc += key[0] + ' - ' + key[1] + ' - Keystone Level: ' + key[2] + "\n"
         em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
-        await client.send_message(message.channel, "Here's the list!", embed=em)
+        await message.channel.send("Here's the list!", embed=em)
 
 @client.event
 async def on_member_remove(member):
