@@ -16,7 +16,7 @@ Keystones are tracked per character signed up and anyone who hasn't completed at
 least a +10 can opt in or out of getting a notification before the weekly reset.
 
 ## Authors
-traugdor, raiku
+traugdor
 
 ## Usage
 
