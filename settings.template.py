@@ -22,3 +22,6 @@ wowClientSecret = 'YourWoWClientSecret'
 wowRegionCode = 'us, eu, apac, or china'
 
 botBaseUrl = 'https://somedomain.com/'
+
+# players must be at least this level for the bot to be able to track them
+minLevelToTrack = 60

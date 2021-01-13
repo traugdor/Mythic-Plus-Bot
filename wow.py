@@ -9,21 +9,26 @@ region = cfg.wowRegionCode
 authorizeurlpost = '.battle.net/oauth/authorize'
 oauthurlpost = '.battle.net/oauth/'
 wowurlpost = '.api.blizzard.com/wow/'
+wowurlbase = '.api.blizzard.com/'
 oauthBase = "" #blank but will be filled out below
 
 if(region == 'china'):
     authorizeurlpost = 'www.battlenet.com.cn/oauth/authorize'
     oauthurlpost = 'www.battlenet.com.cn/oauth/'
     wowurlpost = 'gateway.battlenet.com.cn/wow/'
+    wowurlbase = 'gateway.battlenet.com.cn/'
     region = ''
     
 authorizeUrl = ''.join([urlpre, region, authorizeurlpost])
 oauthBase = ''.join([urlpre, cfg.wowClientId, ':', cfg.wowClientSecret, '@', region, oauthurlpost])
-#--- End setup ---#
+#---      End setup and definitions      ---#
 
 def listCharacters(bID = None, access_token = None, bUsername = None):
-    """Returns list of blizzard characters from database.
-    Required input, one of: bID, bUsername, or access_token"""
+    ##########################################################
+    # Returns list of blizzard characters from database.     #
+    # Required input, oneof: bID, bUsername, or access_token #
+    ##########################################################
+    """Not complete"""
     if bID is not None:
         """do something"""
         #lookup accesstoken where bid = bid
@@ -117,27 +122,29 @@ def getCharacters(access_token, bID = None):
             "level": level
         }"""
     bid = ""
-    wowCharactersURL = urlpre + region + wowurlpost + 'user/characters?access_token=' + access_token
+    wowCharactersURL = urlpre + region + wowurlbase + 'profile/user/wow?namespace=profile-us&locale=en_US&access_token=' + access_token
     r = requests.get(wowCharactersURL)
     response = json.loads(json.dumps(r.json()))
-    characters = response["characters"]
+    wowaccounts = response["wow_accounts"]
     responseData = []
     if bID is None:
         #lookup bid using accesstoken?
         bid = db.getBIDfromToken(access_token)
     else:
         bid = bID
-    for char in characters:
-        name = char["name"].lower()
-        charRegion = char["thumbnail"].split('/',1)[0].lower()
-        level = char["level"]
-        wowChar = {
-            "name": name,
-            "charRegion": charRegion,
-            "bid": bid,
-            "level": level
-        }
-        responseData.append(wowChar)
+    for wowaccount in wowaccounts:
+        characters = wowaccount["characters"]
+        for char in characters:
+            name = char["name"].lower()
+            charRegion = char["realm"]["slug"]
+            level = char["level"]
+            wowChar = {
+                "name": name,
+                "charRegion": charRegion,
+                "bid": bid,
+                "level": level
+            }
+            responseData.append(wowChar)
     return responseData
     
 def getClientToken():

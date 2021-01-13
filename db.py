@@ -140,7 +140,7 @@ def getBIDfromToken(access_token):
     return bid
     
 def getBIDfromDiscordUser(UID):
-    sql = "SELECT blizzardAccountID FROM users WHERE discordUID = '" + UID + "'"
+    sql = "SELECT blizzardAccountID FROM users WHERE discordUID = '" + str(UID) + "'"
     mycursor.execute(sql)
     bid = mycursor.fetchone()[0]
     return bid
@@ -158,9 +158,9 @@ def listAllCharacters(bid = None):
 def getOrAddUserCharacters(characterName, region, dUID):
     sql = ""
     if region is None:
-        sql = "select * from userCharacters uc join wowCharacters wc on uc.characterId = wc.id where wc.characterName = '" + characterName + "'"
+        sql = "select * from userCharacters uc join wowCharacters wc on uc.characterId = wc.id where wc.characterName = '" + characterName + "' and wc.characterlevel >= '" + str(cfg.minLevelToTrack) + "'"
     else:
-        sql = "select * from userCharacters uc join wowCharacters wc on uc.characterId = wc.id where wc.characterName = '" + characterName + "' and wc.region = '" + region + "'"
+        sql = "select * from userCharacters uc join wowCharacters wc on uc.characterId = wc.id where wc.characterName = '" + characterName + "' and wc.region = '" + region + "' and wc.characterlevel >= '" + str(cfg.minLevelToTrack) + "'"
     mycursor.execute(sql)
     characters = mycursor.fetchall()
     if len(characters) == 0:
@@ -168,9 +168,9 @@ def getOrAddUserCharacters(characterName, region, dUID):
         # get cid if bid dUID matches supplied dUID
         try:
             if region is not None:
-                sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + dUID + "' and wc.characterName = '" + characterName + "' and wc.region = '" + region + "'"
+                sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + str(dUID) + "' and wc.characterName = '" + characterName + "' and wc.region = '" + region + "' and wc.characterlevel >= '" + str(cfg.minLevelToTrack) + "'"
             else:
-                sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + dUID + "' and wc.characterName = '" + characterName + "'"
+                sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + str(dUID) + "' and wc.characterName = '" + characterName + "' and wc.characterlevel >= '" + str(cfg.minLevelToTrack) + "'"
             #print(sql)
             mycursor.execute(sql)
             CID, UID = mycursor.fetchall()[0]

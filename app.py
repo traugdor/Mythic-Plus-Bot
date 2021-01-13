@@ -17,6 +17,9 @@ async def on_message(message):
     # we do not want the bot to reply to itself
     if message.author == client.user:
         return
+    # we do not want the bot to reply to other bots
+    if message.author.bot is True:
+        return
     
     print(message.author.name + ": " + message.content)
 
@@ -31,13 +34,14 @@ async def on_message(message):
             await message.author.send("Mythic Plus Bot cannot respond to some commands in private channels. Try the `register` command in a Discord Server where this bot has an online presence.")
         else:
             registermessage = " \
-            Thank you for choosing Mythic Plus Bot! Click this link to get going! \
-            \
-            " + cfg.botBaseUrl + "?url=https%3A%2F%2Fus.battle.net%2Foauth%2Fauthorize%3Fscope%3Dwow.profile%26client_id%3D" \
+Thank you for choosing Mythic Plus Bot! Click this link to get going! \n\n\
+\
+" + cfg.botBaseUrl + "?url=https%3A%2F%2Fus.battle.net%2Foauth%2Fauthorize%3Fscope%3Dwow.profile%26client_id%3D" \
             + cfg.wowClientId + "%26state%3DUID" + str(message.author.id) \
-            + "%26redirect_uri%3Dhttps%3A%2F%2F93010e781ce7453389bdac92f444797d.vfs.cloud9.us-east-2.amazonaws.com%2Foauth%2Fcallback%26response_type%3Dcode"
+            + "%26redirect_uri%3Dhttps%3A%2F%2F90040ceab0094ad6a2e4a6c8c3376d89.vfs.cloud9.us-east-2.amazonaws.com%3A8080%2Foauth%2Fcallback%26response_type%3Dcode"
             try:
                 await message.author.send(registermessage)
+                await message.channel.send(str(message.author.mention) + ", I attempted to send you a direct message with instructions on what to do to register a character.")
             except discord.errors.Forbidden:
                 await message.channel.send("{0.author.mention}, I can't send you a direct message! \n\n \
  \
