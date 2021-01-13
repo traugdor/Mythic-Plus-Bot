@@ -9,7 +9,10 @@
 # Create a bot at https://discordapp.com/developers/applications/ #
 token = 'Your bot token here'
 
-# DB supported is MySQL #
+# Select DB type
+dbtype = 'mysql'
+
+# DB is MySQL
 dbname = 'databasename'
 dbuser = 'username'
 dbpass = 'password'

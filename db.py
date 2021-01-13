@@ -3,22 +3,25 @@ import settings as cfg
 import dblayout as dbl
 from datetime import datetime
 
+print("Connecting to DB...")
 db = mysql.connector.connect(
     host="localhost",
     user=cfg.dbuser,
     passwd=cfg.dbpass,
     database=cfg.dbname
 )
+print("MySQL connected.")
 
 mycursor = db.cursor()
 
 def configure():
+    print("Configuring DB")
     sql = "SELECT table_name FROM information_schema.tables WHERE table_type = 'base table' AND table_schema='" + cfg.dbname + "'"
     val = ()
     mycursor.execute(sql, val)
     result = mycursor.fetchall()
     count = mycursor.rowcount
-    if count == -1 or count < 4:
+    if count == -1 or count < 5:
         print("Installing tables in DB")
         print("creating users table")
         sql = dbl.SQL_users
@@ -36,17 +39,21 @@ def configure():
         sql = dbl.SQL_userCharacters
         mycursor.execute(sql, val)
         db.commit()
+        print("creating discordGuilds table")
+        sql = dbl.SQL_discordGuilds
+        mycursor.execute(sql, val)
+        db.commit()
         print("done")
         sql = "SELECT table_name FROM information_schema.tables WHERE table_type = 'base table' AND table_schema='" + cfg.dbname + "'"
         mycursor.execute(sql, val)
         result = mycursor.fetchall()
         count = mycursor.rowcount
-        if count == -1 or count < 4:
+        if count == -1 or count < 5:
             print("Something went wrong. Please check DB. Bot will fail to work properly until DB is fixed.")
         else:
-            print("DB is good to go!")
+            print("DB is configured!")
     else:
-        print("DB is good to go!")
+        print("DB is already configured! No changes to make.")
 
 def insertUser (discordId, blizzardAccountId):
     sql = "INSERT INTO users (discordUID, blizzardAccountID) VALUES (%s, %s)"
@@ -154,6 +161,16 @@ def listAllCharacters(bid = None):
     mycursor.execute(sql)
     characters = mycursor.fetchall()
     return characters
+
+def listAllCharactersWithName(bid = None, name = None):
+    sql = ""
+    if bid is None or name is None:
+        sql = "SELECT * from wowCharacters"
+    else:
+        sql = "SELECT * FROM wowCharacters where wowAccountId = '" + str(bid) + "' and characterName like '%" + name + "%'"
+    mycursor.execute(sql)
+    characters = mycursor.fetchall()
+    return characters
     
 def getOrAddUserCharacters(characterName, region, dUID):
     sql = ""
@@ -203,9 +220,9 @@ def removeCharacter(characterName, region, dUID):
     else:
         #delete from list
         if region is not None:
-            sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + dUID + "' and wc.characterName = '" + characterName + "' and wc.region = '" + region + "'"
+            sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + str(dUID) + "' and wc.characterName = '" + characterName + "' and wc.region = '" + region + "'"
         else:
-            sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + dUID + "' and wc.characterName = '" + characterName + "'"
+            sql = "select wc.id, u.id from wowCharacters wc join users u on wc.wowAccountId = u.blizzardAccountID where u.discordUID = '" + str(dUID) + "' and wc.characterName = '" + characterName + "'"
         #print(sql)
         mycursor.execute(sql)
         CID, UID = mycursor.fetchall()[0]
@@ -220,8 +237,10 @@ def removeCharacter(characterName, region, dUID):
             return False
         
 def getKeystones():
-    """not implemented"""
     sql = "SELECT characterName, region, COALESCE(highestKey, 'No Key') from wowCharacters wc join userCharacters uc on uc.characterId = wc.id"
     mycursor.execute(sql)
     keys = mycursor.fetchall()
     return keys
+
+def registerGuild(guildID):
+    """not finished"""

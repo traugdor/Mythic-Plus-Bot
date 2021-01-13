@@ -35,8 +35,8 @@ messages that might alert you that the mythic week is almost up.
 When a user invokes the 'register' command, it will respond with in a private message with a URL. This URL will take
 them to a webpage where they will be prompted to log into their World of Warcraft account. Logging into this account
 will register it to make it easier to search mythic plus statistics for the characters that will be added later.
-Multiple World of Warcraft accounts are not yet supported at this time. Accounts may be unregistered by leaving the
-Discord server where this bot is running.
+All accounts connected to the login used will be registered. Accounts may be unregistered by using the 'register remove'
+command.
 
 ### Add
 When a user invokes the 'add' command, check to see if it is followed by a valid character name. If the character
@@ -68,5 +68,5 @@ This notification will be sent via DM to avoid interfering with the Discord serv
 
 If any command is not properly entered, then the bot will reply in the same channel with the proper syntax of that
 command. If no valid command is entered, then the bot will reply with a list of all the available commands. If the
-`!mplus` command prefix is not properly entered, then the bot will not respond. All proper commands will recieve a
+`!mplus` command prefix is not properly entered, then the bot will not respond. All proper commands will receive a
 reply in the same channel to provide the user with feedback that the command was entered properly.

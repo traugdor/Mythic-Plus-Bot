@@ -77,6 +77,7 @@ def oauth_callback():
     
 @app.route('/discordoauth/callback/') #response from adding to discord servers will land here.
 def discordoauth():
+    """not finished"""
     state = request.args.get('state')
     msg = ""
     if state == 'bot':

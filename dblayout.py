@@ -73,3 +73,16 @@ SQL_wowCharacters = "CREATE TABLE IF NOT EXISTS `wowCharacters` ( \
  `datelastmaint` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, \
  KEY `id` (`id`) \
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1"
+
+#discordGuilds
+
+#id -- unique numerical id -- used internally
+#guildID -- discord server ID. discord.py refers to servers as guilds
+#guildName -- discord server name at the time it is registered.
+
+SQL_discordGuilds = "CREATE TABLE IF NOT EXISTS `discordGuilds` ( \
+ `id` INT(11) NOT NULL AUTO_INCREMENT , \
+ `guildID` BIGINT(20) NOT NULL , \
+ `guildName` VARCHAR(100) NOT NULL , \
+ KEY (`id`)\
+) ENGINE = InnoDB DEFAULT CHARSET=latin1"

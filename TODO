@@ -6,9 +6,11 @@ Complete character tracking
     if a user adds a character to the tracker, insert it into the usercharacters table 
     Two days before the weekly reset, filter through the list, and notify users (by their UID)
      if a character hasn't done a keystone yet.
-    After reset, erase the keystones
+    After reset, erase the keystone data
     
 Finish up any unfinished sections in wow.py, app.py, etc.
+
+Add DB support for other DB types
 
 Polish the HTML templates
     Clean up wording

@@ -28,11 +28,13 @@ async def on_message(message):
         await message.channel.send(msg)
         
     if message.content.startswith('!mplus register'):
+        """not finished"""
         #get user id
         #generate URL and use it as part of the unique state id
         if message.channel.type == discord.ChannelType.private:
             await message.author.send("Mythic Plus Bot cannot respond to some commands in private channels. Try the `register` command in a Discord Server where this bot has an online presence.")
         else:
+            gID = message.guild.id
             registermessage = " \
 Thank you for choosing Mythic Plus Bot! Click this link to get going! \n\n\
 \
@@ -50,7 +52,8 @@ Please allow members of this Discord Server to send you a direct message to cont
 Please see online help for instructions on how to do this. It is important that the Mythic Plus Bot be able to send you private messages.".format(message))
         
     if message.content.startswith('!mplus add'):
-        """Not finished"""
+        emdesc = ""
+        emtitle = ""
         if message.channel.type == discord.ChannelType.private:
             await message.author.send("Mythic Plus Bot cannot respond to some commands in private channels. Try the `add` command in a Discord Server where this bot has an online presence.")
         else:
@@ -68,10 +71,23 @@ Please see online help for instructions on how to do this. It is important that 
             characters = db.findCharacterByName(cname, region)
             msg = None
             if len(characters) > 1:
-                msg = ('{0.author.mention}, multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
-                # TODO: Get list of characters matching the input name that are owned by the sending user
-                # TODO: embed character list in message
-                await message.channel.send(msg)
+                msg = (message.author.mention + ', multiple characters were found with the name `' + characterName + '`. Please specify realm by using the format `character realm`').format(message)
+                # get author UID
+                uid = message.author.id
+                # look in users for bid
+                bid = db.getBIDfromDiscordUser(uid)
+                # get list of characters belonging to bid
+                characterList = db.listAllCharactersWithName(bid, cname)
+                for cha in characterList:
+                    #print(cha)
+                    emdesc += cha[2] + ' - ' + cha[4] + ' - Level: ' + str(cha[3]) + "\n"
+                # get author name
+                nick = message.author.nick
+                if nick is None:
+                    nick = message.author.display_name
+                emtitle = 'Characters available with name ' + cname
+                em = discord.Embed(title=emtitle, description=emdesc, colour=0xfaac41)
+                await message.channel.send(msg, embed=em)
             elif len(characters) == 1:
                 #   if only one character is found with that name, then add it to the list of tracked characters.
                 # search for character ID in userCharacters
@@ -132,7 +148,6 @@ Please see online help for instructions on how to do this. It is important that 
         emdesc = ""
         emtitle = ""
         # reject command from private message
-        print(message.channel.type)
         if message.channel.type == discord.ChannelType.private:
             await message.author.send("Mythic Plus Bot cannot respond to some commands in private channels. Try the `character list` command in a Discord Server where this bot has an online presence.")
         else:
@@ -182,23 +197,21 @@ async def on_member_remove(member):
     """
 
 @client.event
+async def on_guild_join(guild):
+    # record guild in the database.
+    # Any incoming message will have to be verified to see if it is from a registered guild
+    gID = guild.id
+    db.registerGuild(gID)
+
+@client.event
 async def on_ready():
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
     db.configure()
-    
-async def find_channel(guild):
-    """
-    Finds a suitable guild channel for posting the
-    welcome message.
-    """
-    for c in guild.channels:
-        if not c.permissions_for(guild.me).send_messages:
-            continue
-        return c
 
+httpserver.bot(client)
 httpserver.keep_alive()
 client.run(TOKEN)
     
