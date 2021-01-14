@@ -5,6 +5,7 @@ import db
 import settings as cfg
 import wow
 import httpserver
+import urllib.parse
 
 TOKEN = cfg.token
 
@@ -40,7 +41,7 @@ Thank you for choosing Mythic Plus Bot! Click this link to get going! \n\n\
 \
 " + cfg.botBaseUrl + "?url=https%3A%2F%2Fus.battle.net%2Foauth%2Fauthorize%3Fscope%3Dwow.profile%26client_id%3D" \
             + cfg.wowClientId + "%26state%3DUID" + str(message.author.id) \
-            + "%26redirect_uri%3Dhttps%3A%2F%2F90040ceab0094ad6a2e4a6c8c3376d89.vfs.cloud9.us-east-2.amazonaws.com%3A8080%2Foauth%2Fcallback%26response_type%3Dcode"
+            + "%26redirect_uri%3D" + urllib.parse.quote_plus("https://90040ceab0094ad6a2e4a6c8c3376d89.vfs.cloud9.us-east-2.amazonaws.com:8080/oauth/callback?response_type=code")
             try:
                 await message.author.send(registermessage)
                 await message.channel.send(str(message.author.mention) + ", I attempted to send you a direct message with instructions on what to do to register a character.")
@@ -195,6 +196,7 @@ async def on_member_remove(member):
     Find all the characters that belong to this
     member and remove all data.
     """
+    dUID = member.id
 
 @client.event
 async def on_guild_join(guild):

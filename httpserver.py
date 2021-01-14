@@ -1,7 +1,8 @@
 import discord
-from flask import Flask, request, flash, render_template, session, abort
+from flask import Flask, request, flash, render_template, session, abort, send_from_directory
 from threading import Thread
 from discord.utils import get
+import os
 import wow
 import db
 
@@ -9,6 +10,11 @@ client = None
 DEFAULT = object()
 
 app = Flask(__name__) #start web server
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route('/')
 def home():
@@ -75,19 +81,18 @@ def oauth_callback():
         #there was some error, tell the user so they can hopefully report it. :P
         return render_template('main.html', name="Uh oh!", message="There was an error: " + access_token)
     
-@app.route('/discordoauth/callback/') #response from adding to discord servers will land here.
+"""@app.route('/discordoauth/callback/') #response from adding to discord servers will land here.
 def discordoauth():
-    """not finished"""
+    ### not finished
+    ### not implemented???
     state = request.args.get('state')
     msg = ""
     if state == 'bot':
         msg = "Thanks for choosing to use Mythic Plus Bot. Please use the Discord command '!mplus register' to get started!"
     else:
         msg = ""
+    return render_template('discord_added.html', message="Thanks for choosing to use Mythic Plus Bot. Please use the Discord command '!mplus register' to get started!") #render landing page"""
     
-    return render_template('discord_added.html', message="Thanks for choosing to use Mythic Plus Bot. Please use the Discord command '!mplus register' to get started!") #render landing page
-    
-#below is code that keeps the http server running. I advise shoving it through nginx or apache with internal port forwarding because this code spits tons of errors if you try to run it through gunicorn. Please help.
 def run():
     app.run(
         host='0.0.0.0', 
